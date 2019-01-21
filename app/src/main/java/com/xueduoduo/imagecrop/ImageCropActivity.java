@@ -12,5 +12,6 @@ public class ImageCropActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mCropView=findViewById(R.id.crop_view);
+        mCropView.setImageResource(R.mipmap.img_1);
     }
 }

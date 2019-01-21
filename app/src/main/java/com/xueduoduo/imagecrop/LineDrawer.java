@@ -23,18 +23,18 @@ public class LineDrawer {
     private RectF mRectF;
     //线
     private Paint mLinePaint;
+    //阴影
+    private Path mShadowPath;
+    private Paint mShadowPaint;
     //矩形 边角
     private Paint mAreaPaint;
     private Path mAreaPath;
-
     //最小宽高
     private int minWidth, minHeight;
     //边缘线宽
     private int mLineWidthOutside;
     //内部线宽
     private int mLineWidthInside;
-    //矩形最小宽
-    private int mPartMinWidth;
     //圆半径
     private int circleRadius;
     private int touchCircleRadius;
@@ -67,6 +67,10 @@ public class LineDrawer {
         mAreaPaint = new Paint();
         mAreaPaint.setColor(Color.BLUE);
         mAreaPath = new Path();
+
+        mShadowPaint = new Paint();
+        mShadowPaint.setColor(Color.parseColor("#44000000"));
+        mShadowPath = new Path();
     }
 
     /**
@@ -75,9 +79,8 @@ public class LineDrawer {
     private void initSize() {
         mLineWidthInside = (int) (1 * mDisplayMetrics.density);
         mLineWidthOutside = (int) (2 * mDisplayMetrics.density);
-        mPartMinWidth = (int) (8 * mDisplayMetrics.density);
         //最小宽高
-        minWidth = (int) (mDisplayMetrics.density * 40);
+        minWidth = (int) (mDisplayMetrics.density * 50);
         minHeight = minWidth;
         circleRadius = (int) (mDensity * 3);
         touchCircleRadius = (int) (mDensity * 13);
@@ -104,12 +107,32 @@ public class LineDrawer {
         canvas.drawLine(mRectF.left + horMean, mRectF.top, mRectF.left + horMean, mRectF.bottom, mLinePaint);
         canvas.drawLine(mRectF.right - horMean, mRectF.top, mRectF.right - horMean, mRectF.bottom, mLinePaint);
         //画中间交叉圆 左上 右上 左下 右下
+
+        mAreaPaint.reset();
+        mAreaPaint.setColor(Color.BLUE);
         mAreaPath.reset();
         mAreaPath.addCircle(mRectF.left + horMean, mRectF.top + verMean, circleRadius, Path.Direction.CW);
         mAreaPath.addCircle(mRectF.right - horMean, mRectF.top + verMean, circleRadius, Path.Direction.CW);
         mAreaPath.addCircle(mRectF.left + horMean, mRectF.bottom - verMean, circleRadius, Path.Direction.CW);
         mAreaPath.addCircle(mRectF.right - horMean, mRectF.bottom - verMean, circleRadius, Path.Direction.CW);
         canvas.drawPath(mAreaPath, mAreaPaint);
+        //画阴影
+        //1外圈
+        mShadowPath.reset();
+        mShadowPath.moveTo(0, 0);
+        mShadowPath.lineTo(mMaxRect.right, 0);
+        mShadowPath.lineTo(mMaxRect.right, mMaxRect.bottom);
+        mShadowPath.lineTo(0, mMaxRect.bottom);
+        //2内圈
+        mShadowPath.lineTo(0, mRectF.top);
+        mShadowPath.lineTo(mRectF.left, mRectF.top);
+        mShadowPath.lineTo(mRectF.left, mRectF.bottom);
+        mShadowPath.lineTo(mRectF.right, mRectF.bottom);
+        mShadowPath.lineTo(mRectF.right, mRectF.top);
+        mShadowPath.lineTo(0, mRectF.top);
+        mShadowPath.lineTo(0, 0);
+        canvas.drawPath(mShadowPath, mShadowPaint);
+
     }
 
     /**
@@ -138,15 +161,16 @@ public class LineDrawer {
                 if (isMoving) {
                     //移动处理
                     handleMove(event.getX(), event.getY());
+                    onLineChangeListener.onLineChange(this);
                 }
                 break;
             case MotionEvent.ACTION_UP:
+                if (isMoving)
+                    onLineChangeListener.onLineChange(this);
                 isMoving = false;
-                onLineChangeListener.onLineChange(this);
                 break;
         }
         return isMoving;
-
     }
 
     private void handleMove(float x, float y) {
@@ -218,11 +242,9 @@ public class LineDrawer {
         mRectF.set(left, top, right, bottom);
         lastX = x;
         lastY = y;
-        onLineChangeListener.onLineChange(this);
     }
 
     private float getTop(float y, float top, float bottom) {
-
         top += (y - lastY);
         if (top < touchCircleRadius) top = touchCircleRadius;
         if (bottom - top < minHeight) {

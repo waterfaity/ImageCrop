@@ -25,6 +25,7 @@ import android.widget.ImageView;
 public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLineChangeListener {
     private static final String TAG = "imageCropView";
     private LineDrawer mLineDrawer;
+    private BitmapDrawer mBitmapDrawer;
     private Paint mPaint;
 
 
@@ -38,6 +39,7 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
         mLineDrawer = new LineDrawer(context.getResources().getDisplayMetrics());
         mLineDrawer.setOnLineChangeListener(this);
         mLineDrawer.setBounds(new RectF(50, 50, 300, 300));
+        mBitmapDrawer = new BitmapDrawer();
     }
 
     private void test() {
