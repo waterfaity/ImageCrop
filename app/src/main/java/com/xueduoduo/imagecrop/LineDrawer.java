@@ -15,7 +15,6 @@ import android.view.MotionEvent;
  * @info:
  */
 public class LineDrawer {
-    private final DisplayMetrics mDisplayMetrics;//
     private float mDensity;
     //最大边界
     private RectF mMaxRect;
@@ -51,9 +50,8 @@ public class LineDrawer {
         this.onLineChangeListener = onLineChangeListener;
     }
 
-    public LineDrawer(DisplayMetrics displayMetrics) {
-        this.mDisplayMetrics = displayMetrics;
-        mDensity = mDisplayMetrics.density;
+    public LineDrawer(float density) {
+        mDensity = density;
         initPaint();
         initSize();
 
@@ -77,17 +75,21 @@ public class LineDrawer {
      * 宽 = 外部线*2 + 内部线*2 + 矩形()*3
      */
     private void initSize() {
-        mLineWidthInside = (int) (1 * mDisplayMetrics.density);
-        mLineWidthOutside = (int) (2 * mDisplayMetrics.density);
+        mLineWidthInside = (int) (1 * mDensity);
+        mLineWidthOutside = (int) (2 * mDensity);
         //最小宽高
-        minWidth = (int) (mDisplayMetrics.density * 50);
+        minWidth = (int) (mDensity * 50);
         minHeight = minWidth;
         circleRadius = (int) (mDensity * 3);
         touchCircleRadius = (int) (mDensity * 13);
     }
 
-    public void setBounds(RectF rectF) {
-        this.mRectF = rectF;
+    public void setBounds(float left, float top, float right, float bottom) {
+        if (mRectF == null) {
+            mRectF = new RectF(left, top, right, bottom);
+        } else {
+            mRectF.set(left, top, right, bottom);
+        }
     }
 
     public void draw(Canvas canvas) {
@@ -140,7 +142,7 @@ public class LineDrawer {
      *
      * @param event
      */
-    public boolean isTouchMovePath(MotionEvent event) {
+    public boolean isCanMove(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 isMoving = false;

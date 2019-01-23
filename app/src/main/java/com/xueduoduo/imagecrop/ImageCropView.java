@@ -1,20 +1,12 @@
 package com.xueduoduo.imagecrop;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.RectF;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.support.v7.widget.AppCompatImageView;
-import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
-import android.view.View;
-import android.widget.ImageView;
 
 /**
  * @author water_fairy
@@ -27,6 +19,7 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
     private LineDrawer mLineDrawer;
     private BitmapDrawer mBitmapDrawer;
     private Paint mPaint;
+    private boolean isImgMove;
 
 
     public ImageCropView(Context context) {
@@ -36,10 +29,10 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
     public ImageCropView(Context context, AttributeSet attrs) {
         super(context, attrs);
         test();
-        mLineDrawer = new LineDrawer(context.getResources().getDisplayMetrics());
+        mLineDrawer = new LineDrawer(context.getResources().getDisplayMetrics().density);
         mLineDrawer.setOnLineChangeListener(this);
-        mLineDrawer.setBounds(new RectF(50, 50, 300, 300));
         mBitmapDrawer = new BitmapDrawer();
+
     }
 
     private void test() {
@@ -51,8 +44,13 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        if (changed)
+        if (changed) {
+            float minRadius = Math.min(right - left, bottom - top) / 4;
+            float centerX = (right - left) / 2;
+            float centerY = (bottom - top) / 2;
+            mLineDrawer.setBounds(centerX - minRadius, centerY - minRadius, centerX + minRadius, centerY + minRadius);
             mLineDrawer.setMaxRect(right - left, bottom - top);
+        }
     }
 
     @Override
@@ -64,10 +62,13 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-
-        boolean touchMovePath = mLineDrawer.isTouchMovePath(event);
-        Log.i(TAG, "onTouchEvent: " + touchMovePath + "  " + event.getAction());
-        return true;
+        boolean isLineMove = false;
+        if (!isImgMove) {
+            isLineMove = mLineDrawer.isCanMove(event);
+        }
+        if (!isLineMove)
+            isImgMove = mBitmapDrawer.isCanMove(event);
+        return isLineMove || isImgMove;
     }
 
     @Override
