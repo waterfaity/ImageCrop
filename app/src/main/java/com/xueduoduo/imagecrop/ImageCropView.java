@@ -14,7 +14,7 @@ import android.view.MotionEvent;
  * @date 2019/1/20 16:00
  * @info:
  */
-public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLineChangeListener {
+public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLineChangeListener, BitmapDrawer.OnDrawerChangeListener {
     private static final String TAG = "imageCropView";
     private LineDrawer mLineDrawer;
     private BitmapDrawer mBitmapDrawer;
@@ -31,7 +31,8 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
         test();
         mLineDrawer = new LineDrawer(context.getResources().getDisplayMetrics().density);
         mLineDrawer.setOnLineChangeListener(this);
-        mBitmapDrawer = new BitmapDrawer();
+        mBitmapDrawer = new BitmapDrawer(this);
+        mBitmapDrawer.setOnDrawerChangeListener(this);
 
     }
 
@@ -56,6 +57,7 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+//        mBitmapDrawer.draw(canvas);
         mLineDrawer.draw(canvas);
         canvas.drawText(mLineDrawer.toString(), 10, 25, mPaint);
     }
@@ -63,16 +65,26 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         boolean isLineMove = false;
-        if (!isImgMove) {
-            isLineMove = mLineDrawer.isCanMove(event);
-        }
-        if (!isLineMove)
-            isImgMove = mBitmapDrawer.isCanMove(event);
+//        if (!isImgMove) {
+//            isLineMove = mLineDrawer.isCanMove(event);
+//        }
+//        if (!isLineMove)
+        isImgMove = mBitmapDrawer.isCanMove(event);
         return isLineMove || isImgMove;
     }
 
+    /**
+     * 线改变
+     *
+     * @param lineDrawer
+     */
     @Override
     public void onLineChange(LineDrawer lineDrawer) {
+        invalidate();
+    }
+
+    @Override
+    public void onBitmapChange(BitmapDrawer bitmapDrawer) {
         invalidate();
     }
 }
