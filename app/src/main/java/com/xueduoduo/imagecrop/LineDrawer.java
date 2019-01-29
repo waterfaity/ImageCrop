@@ -5,7 +5,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
-import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 
 /**
@@ -297,22 +296,35 @@ public class LineDrawer {
                 return MoveStyle.LT;
             } else if (isInLineHor(mRectF.bottom, y)) {
                 return MoveStyle.LB;
-            } else return MoveStyle.LEFT;
+            } else if (isInside(mRectF.top, mRectF.bottom, y)) return MoveStyle.LEFT;
         } else if (isInLineVer(mRectF.right, x)) {
             //右边线
             if (isInLineHor(mRectF.top, y)) {
                 return MoveStyle.RT;
             } else if (isInLineHor(mRectF.bottom, y)) {
                 return MoveStyle.RB;
-            } else return MoveStyle.RIGHT;
-        } else if (isInLineHor(mRectF.top, y)) {
+            } else if (isInside(mRectF.top, mRectF.bottom, y)) return MoveStyle.RIGHT;
+        } else if (isInLineHor(mRectF.top, y) && isInside(mRectF.left, mRectF.right, x)) {
             //上边
             return MoveStyle.TOP;
-        } else if (isInLineHor(mRectF.bottom, y)) {
+        } else if (isInLineHor(mRectF.bottom, y) && isInside(mRectF.left, mRectF.right, x)) {
             //下边
             return MoveStyle.BOTTOM;
         }
         return MoveStyle.NO;
+    }
+
+    /**
+     * 是否在两线中间
+     *
+     * @param line1
+     * @param line2
+     * @param value
+     * @return
+     */
+    private boolean isInside(float line1, float line2, float value) {
+
+        return value > line1 - touchCircleRadius && value < line2 + touchCircleRadius;
     }
 
     /**

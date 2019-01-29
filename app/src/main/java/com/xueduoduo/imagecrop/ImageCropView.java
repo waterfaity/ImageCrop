@@ -65,11 +65,11 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         boolean isLineMove = false;
-//        if (!isImgMove) {
-//            isLineMove = mLineDrawer.isCanMove(event);
-//        }
-//        if (!isLineMove)
-        isImgMove = mBitmapDrawer.isCanMove(event);
+        if (!isImgMove) {
+            isLineMove = mLineDrawer.isCanMove(event);
+        }
+        if (!isLineMove)
+            isImgMove = mBitmapDrawer.isCanMove(event);
         return isLineMove || isImgMove;
     }
 
