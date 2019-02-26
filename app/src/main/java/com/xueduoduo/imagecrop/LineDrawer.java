@@ -33,9 +33,12 @@ public class LineDrawer {
     private int mLineWidthOutside;
     //内部线宽
     private int mLineWidthInside;
-    //圆半径
+    //中间圆点半径
     private int circleRadius;
-    private int touchCircleRadius;
+    //距离边宽度
+    private int margin;
+    //线两侧宽度之间的距离   增加可移动点的范围
+    private int touchRadius;
 
     //移动中
     private boolean isMoving;
@@ -80,7 +83,8 @@ public class LineDrawer {
         minWidth = (int) (mDensity * 50);
         minHeight = minWidth;
         circleRadius = (int) (mDensity * 3);
-        touchCircleRadius = (int) (mDensity * 13);
+        margin = (int) (mDensity * 0);
+        touchRadius = (int) (mDensity * 13);
     }
 
     public void setBounds(float left, float top, float right, float bottom) {
@@ -107,8 +111,8 @@ public class LineDrawer {
         float horMean = mRectF.width() / 3F;
         canvas.drawLine(mRectF.left + horMean, mRectF.top, mRectF.left + horMean, mRectF.bottom, mLinePaint);
         canvas.drawLine(mRectF.right - horMean, mRectF.top, mRectF.right - horMean, mRectF.bottom, mLinePaint);
-        //画中间交叉圆 左上 右上 左下 右下
 
+        //画中间交叉圆 左上 右上 左下 右下
         mAreaPaint.reset();
         mAreaPaint.setColor(Color.BLUE);
         mAreaPath.reset();
@@ -137,7 +141,7 @@ public class LineDrawer {
     }
 
     /**
-     * 是否按在课移动的区域
+     * 是否按在可移动的区域
      *
      * @param event
      */
@@ -150,7 +154,7 @@ public class LineDrawer {
                 if (MoveStyle.NO != (moveStyle = isInCircle(event.getX(), event.getY()))) {
                     isMoving = true;
                 }
-                //2.判断是否在 四角
+                //2.判断是否在 四角及四边线
                 if (!isMoving && MoveStyle.NO != (moveStyle = isInCornerOrLine(event.getX(), event.getY()))) {
                     isMoving = true;
                 }
@@ -217,25 +221,25 @@ public class LineDrawer {
                 float heightTemp = bottom - top;
                 left += (x - lastX);
                 right += (x - lastX);
-                if (x < lastX && left < touchCircleRadius) {
+                if (x < lastX && left < margin) {
                     //到达左侧
-                    left = touchCircleRadius;
-                    right = touchCircleRadius + withTemp;
-                } else if (x > lastX && right > mMaxRect.right - touchCircleRadius) {
+                    left = margin;
+                    right = margin + withTemp;
+                } else if (x > lastX && right > mMaxRect.right - margin) {
                     //到达右侧
-                    right = mMaxRect.right - touchCircleRadius;
+                    right = mMaxRect.right - margin;
                     left = right - withTemp;
                 }
                 top += (y - lastY);
                 bottom += (y - lastY);
 
-                if (y < lastY && top < touchCircleRadius) {
+                if (y < lastY && top < margin) {
                     //到达左侧
-                    top = touchCircleRadius;
-                    bottom = touchCircleRadius + heightTemp;
-                } else if (y > lastY && bottom > mMaxRect.bottom - touchCircleRadius) {
+                    top = margin;
+                    bottom = margin + heightTemp;
+                } else if (y > lastY && bottom > mMaxRect.bottom - margin) {
                     //到达右侧
-                    bottom = mMaxRect.bottom - touchCircleRadius;
+                    bottom = mMaxRect.bottom - margin;
                     top = bottom - heightTemp;
                 }
                 break;
@@ -247,7 +251,7 @@ public class LineDrawer {
 
     private float getTop(float y, float top, float bottom) {
         top += (y - lastY);
-        if (top < touchCircleRadius) top = touchCircleRadius;
+        if (top < margin) top = margin;
         if (bottom - top < minHeight) {
             top = bottom - minHeight;
         }
@@ -256,8 +260,8 @@ public class LineDrawer {
 
     private float getBottom(float y, float top, float bottom) {
         bottom += (y - lastY);
-        if (bottom > mMaxRect.bottom - touchCircleRadius)
-            bottom = mMaxRect.bottom - touchCircleRadius;
+        if (bottom > mMaxRect.bottom - margin)
+            bottom = mMaxRect.bottom - margin;
         if (bottom - top < minHeight) {
             bottom = top + minHeight;
         }
@@ -266,7 +270,7 @@ public class LineDrawer {
 
     private float getLeft(float x, float left, float right) {
         left += (x - lastX);
-        if (left < touchCircleRadius) left = touchCircleRadius;
+        if (left < margin) left = margin;
         if (right - left < minWidth) {
             left = right - minWidth;
         }
@@ -275,7 +279,7 @@ public class LineDrawer {
 
     private float getRight(float x, float left, float right) {
         right += (x - lastX);
-        if (right > mMaxRect.right - touchCircleRadius) right = mMaxRect.right - touchCircleRadius;
+        if (right > mMaxRect.right - margin) right = mMaxRect.right - margin;
         if (right - left < minWidth) {
             right = left + minWidth;
         }
@@ -283,7 +287,7 @@ public class LineDrawer {
     }
 
     /**
-     * 边角或则边线
+     * 四角 或 四边线
      *
      * @param x
      * @param y
@@ -291,24 +295,34 @@ public class LineDrawer {
      */
     private MoveStyle isInCornerOrLine(float x, float y) {
         if (isInLineVer(mRectF.left, x)) {
-            //左边线
+            //在左边竖线上
             if (isInLineHor(mRectF.top, y)) {
+                //左边-上边 ->左上角
                 return MoveStyle.LT;
             } else if (isInLineHor(mRectF.bottom, y)) {
+                //左边-下边 ->左下角
                 return MoveStyle.LB;
-            } else if (isInside(mRectF.top, mRectF.bottom, y)) return MoveStyle.LEFT;
+            } else if (isInside(mRectF.top, mRectF.bottom, y)) {
+                //左边-中间 ->左边线
+                return MoveStyle.LEFT;
+            }
         } else if (isInLineVer(mRectF.right, x)) {
-            //右边线
+            //在右边竖线上
             if (isInLineHor(mRectF.top, y)) {
+                //右边-上边 ->右上角
                 return MoveStyle.RT;
             } else if (isInLineHor(mRectF.bottom, y)) {
+                //右边-下边 ->右下角
                 return MoveStyle.RB;
-            } else if (isInside(mRectF.top, mRectF.bottom, y)) return MoveStyle.RIGHT;
+            } else if (isInside(mRectF.top, mRectF.bottom, y)) {
+                //右边-中间 ->右边线
+                return MoveStyle.RIGHT;
+            }
         } else if (isInLineHor(mRectF.top, y) && isInside(mRectF.left, mRectF.right, x)) {
-            //上边
+            //上边线
             return MoveStyle.TOP;
         } else if (isInLineHor(mRectF.bottom, y) && isInside(mRectF.left, mRectF.right, x)) {
-            //下边
+            //下边线
             return MoveStyle.BOTTOM;
         }
         return MoveStyle.NO;
@@ -323,28 +337,38 @@ public class LineDrawer {
      * @return
      */
     private boolean isInside(float line1, float line2, float value) {
-
-        return value > line1 - touchCircleRadius && value < line2 + touchCircleRadius;
+        return value > line1 - touchRadius && value < line2 + touchRadius;
     }
 
     /**
+     * 是否在横线上
+     *
      * @param y  目标线
      * @param y1
      * @return
      */
     private boolean isInLineHor(float y, float y1) {
-        return y1 >= y - touchCircleRadius && y1 <= y + touchCircleRadius;
+        return y1 >= y - touchRadius && y1 <= y + touchRadius;
     }
 
     /**
+     * 是否在竖线上
+     *
      * @param x
      * @param x1
      * @return
      */
     private boolean isInLineVer(float x, float x1) {
-        return x1 >= x - touchCircleRadius && x1 <= x + touchCircleRadius;
+        return x1 >= x - touchRadius && x1 <= x + touchRadius;
     }
 
+    /**
+     * 是否在圆上(四个圆)
+     *
+     * @param x
+     * @param y
+     * @return
+     */
     private MoveStyle isInCircle(float x, float y) {
         //1 横
         float verMean = mRectF.height() / 3F;
@@ -365,7 +389,6 @@ public class LineDrawer {
         }
     }
 
-
     /**
      * 是否在圆上
      *
@@ -376,7 +399,7 @@ public class LineDrawer {
      * @return
      */
     private boolean isInCircleSub(float x, float y, float xTemp, float yTemp) {
-        return xTemp >= (x - touchCircleRadius) && xTemp <= (x + touchCircleRadius) && yTemp >= (y - touchCircleRadius) && yTemp <= (y + touchCircleRadius);
+        return xTemp >= (x - touchRadius) && xTemp <= (x + touchRadius) && yTemp >= (y - touchRadius) && yTemp <= (y + touchRadius);
     }
 
     public void setMaxRect(int width, int height) {
