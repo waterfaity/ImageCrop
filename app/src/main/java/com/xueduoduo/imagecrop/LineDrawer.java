@@ -430,7 +430,6 @@ public class LineDrawer {
         MoveStyle(int ni) {
             nativeInt = ni;
         }
-
         final int nativeInt;
     }
 
