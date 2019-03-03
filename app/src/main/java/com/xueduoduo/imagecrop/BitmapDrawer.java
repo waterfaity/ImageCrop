@@ -174,6 +174,14 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
     }
 
     /**
+     * 贴着 剪切线的边缘
+     */
+    private void checkBorderAndAlignLine() {
+        RectF matrixRectF = getMatrixRectF();
+
+    }
+
+    /**
      * 在缩放时，进行图片显示范围的控制
      */
     private void checkBorderAndCenterWhenScale() {
