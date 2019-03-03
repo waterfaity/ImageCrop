@@ -4,7 +4,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.RectF;
+import android.util.Log;
 import android.view.MotionEvent;
 
 /**
@@ -14,6 +16,7 @@ import android.view.MotionEvent;
  * @info:
  */
 public class LineDrawer {
+    private static final String TAG = "lineDrawer";
     private float mDensity;
     //最大边界
     private RectF mMaxRect;
@@ -47,6 +50,8 @@ public class LineDrawer {
     //移动旧坐标
     private float lastX;
     private float lastY;
+    private RectF bitmapRect;
+    private float ratio;
 
     public void setOnLineChangeListener(OnLineChangeListener onLineChangeListener) {
         this.onLineChangeListener = onLineChangeListener;
@@ -178,7 +183,14 @@ public class LineDrawer {
         return isMoving;
     }
 
+    /**
+     * 移动坐标
+     *
+     * @param x
+     * @param y
+     */
     private void handleMove(float x, float y) {
+        Log.i(TAG, "handleMove bitmapRect: " + bitmapRect.toString());
         float left = mRectF.left;
         float top = mRectF.top;
         float right = mRectF.right;
@@ -221,25 +233,43 @@ public class LineDrawer {
                 float heightTemp = bottom - top;
                 left += (x - lastX);
                 right += (x - lastX);
+                //判断到达view的边缘(左右)
                 if (x < lastX && left < margin) {
-                    //到达左侧
+                    //到达view左侧
                     left = margin;
                     right = margin + withTemp;
                 } else if (x > lastX && right > mMaxRect.right - margin) {
-                    //到达右侧
+                    //到达view右侧
                     right = mMaxRect.right - margin;
+                    left = right - withTemp;
+                } else if (x < lastX && left < bitmapRect.left) {
+                    //到达bitmap左侧
+                    left =  bitmapRect.left;
+                    right = left+ withTemp;
+                } else if (x > lastX && right > bitmapRect.right) {
+                    //到达bitmap右侧
+                    right = bitmapRect.right;
                     left = right - withTemp;
                 }
                 top += (y - lastY);
                 bottom += (y - lastY);
 
+                //判断到达view的边缘(上下)
                 if (y < lastY && top < margin) {
-                    //到达左侧
+                    //到达view上侧
                     top = margin;
                     bottom = margin + heightTemp;
                 } else if (y > lastY && bottom > mMaxRect.bottom - margin) {
-                    //到达右侧
+                    //到达view下侧
                     bottom = mMaxRect.bottom - margin;
+                    top = bottom - heightTemp;
+                }else  if (y < lastY && top < bitmapRect.top) {
+                    //到达bitmap上侧
+                    top =  bitmapRect.top;
+                    bottom = top + heightTemp;
+                } else if (y > lastY && bottom >  bitmapRect.bottom) {
+                    //到达bitmap下侧
+                    bottom =bitmapRect.bottom;
                     top = bottom - heightTemp;
                 }
                 break;
@@ -249,9 +279,19 @@ public class LineDrawer {
         lastY = y;
     }
 
+    /**
+     * 移动时获取上坐标
+     *
+     * @param y      手指y坐标
+     * @param top    上
+     * @param bottom
+     * @return
+     */
     private float getTop(float y, float top, float bottom) {
+        Log.i(TAG, "getTop: " + y + "   " + top + "  " + bottom);
         top += (y - lastY);
         if (top < margin) top = margin;
+        if (top < bitmapRect.top) top = bitmapRect.top;
         if (bottom - top < minHeight) {
             top = bottom - minHeight;
         }
@@ -262,15 +302,23 @@ public class LineDrawer {
         bottom += (y - lastY);
         if (bottom > mMaxRect.bottom - margin)
             bottom = mMaxRect.bottom - margin;
+        if (bottom > bitmapRect.bottom) bottom = bitmapRect.bottom;
         if (bottom - top < minHeight) {
             bottom = top + minHeight;
         }
         return bottom;
     }
 
+    /**
+     * @param x     移动的坐标
+     * @param left  当前当前边框左坐标
+     * @param right 当前当前边框右坐标
+     * @return
+     */
     private float getLeft(float x, float left, float right) {
         left += (x - lastX);
         if (left < margin) left = margin;
+        if (left < bitmapRect.left) left = bitmapRect.left;
         if (right - left < minWidth) {
             left = right - minWidth;
         }
@@ -280,6 +328,7 @@ public class LineDrawer {
     private float getRight(float x, float left, float right) {
         right += (x - lastX);
         if (right > mMaxRect.right - margin) right = mMaxRect.right - margin;
+        if (right > bitmapRect.right) right = bitmapRect.right;
         if (right - left < minWidth) {
             right = left + minWidth;
         }
@@ -409,6 +458,22 @@ public class LineDrawer {
         mMaxRect.set(0, 0, width, height);
     }
 
+    public void freshBitmapRect(RectF bitmapRect) {
+        this.bitmapRect = bitmapRect;
+    }
+
+    public RectF getLineRect() {
+        return mRectF;
+    }
+
+    public void setRatio(float ratio) {
+        this.ratio = ratio;
+    }
+
+    public float getRatio() {
+        return ratio;
+    }
+
     public interface OnLineChangeListener {
         void onLineChange(LineDrawer lineDrawer);
     }
@@ -430,6 +495,7 @@ public class LineDrawer {
         MoveStyle(int ni) {
             nativeInt = ni;
         }
+
         final int nativeInt;
     }
 

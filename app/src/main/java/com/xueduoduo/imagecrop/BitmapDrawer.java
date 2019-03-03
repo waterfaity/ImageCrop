@@ -26,9 +26,10 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
     private int mLastPointCount;
     private float[] matrixValues = new float[9];
 
-    private float BIGGER = 4;
-    private float SMALLER;
-    private float currentScale;
+    private float BIGGER = 4;//最大缩放倍数
+    private float SMALLER;//默认是加载图片时的缩放大小
+    private float currentScale;//当前缩放
+    private RectF lineRect;//剪切线rect
 
 
     public BitmapDrawer(ImageView imageView) {
@@ -49,7 +50,6 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
         //双击事件进行关联
         if (gestureDetector.onTouchEvent(event)) {
             //如果是双击的话就直接不向下执行了
-
             return true;
         }
         //求平均点
@@ -84,8 +84,6 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
                 isDrag = false;
                 isZoom = false;
                 break;
-
-
             case MotionEvent.ACTION_MOVE:
                 move(x, y);
                 break;
@@ -148,7 +146,7 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
 
 
     /**
-     * 缩放中
+     * 根据手势缩放中
      *
      * @param detector
      * @return
@@ -233,6 +231,10 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
         return rect;
     }
 
+    public RectF getBitmapRect() {
+        return getMatrixRectF();
+    }
+
     /**
      * 缩放开始
      *
@@ -253,6 +255,10 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
     @Override
     public void onScaleEnd(ScaleGestureDetector detector) {
         isZoom = false;
+    }
+
+    public void freshLineRect(RectF lineRect) {
+        this.lineRect = lineRect;
     }
 
     public interface OnDrawerChangeListener {
