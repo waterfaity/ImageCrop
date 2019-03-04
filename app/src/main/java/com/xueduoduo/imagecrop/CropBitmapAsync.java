@@ -10,12 +10,34 @@ import java.io.File;
 import java.io.IOException;
 
 public class CropBitmapAsync {
-    public static void getCropBitmap(final Bitmap.CompressFormat format, final Drawable drawable, final RectF lineRect, final RectF bitmapRect, final OnCropBitmapListener onCropBitmapListener) {
-        if (onCropBitmapListener!=null)onCropBitmapListener.onCropStart();
+    private Bitmap.CompressFormat format;
+    private Drawable drawable;
+    private RectF lineRect;
+    private RectF bitmapRect;
+    private OnCropBitmapListener onCropBitmapListener;
+
+    public CropBitmapAsync() {
+
+    }
+
+    public CropBitmapAsync initData(Bitmap.CompressFormat format,
+                                    Drawable drawable,
+                                    RectF lineRect,
+                                    RectF bitmapRect,
+                                    OnCropBitmapListener onCropBitmapListener) {
+        this.format = format;
+        this.drawable = drawable;
+        this.lineRect = lineRect;
+        this.bitmapRect = bitmapRect;
+        this.onCropBitmapListener = onCropBitmapListener;
+        return this;
+    }
+
+    public void start() {
+        if (onCropBitmapListener != null) onCropBitmapListener.onCropStart();
         new AsyncTask<Void, Void, String>() {
             @Override
             protected String doInBackground(Void... voids) {
-
                 //剪切bitmap
                 Bitmap bitmap = cropBitmap(drawable, lineRect, bitmapRect);
                 if (bitmap == null) {
@@ -23,6 +45,7 @@ public class CropBitmapAsync {
                         onCropBitmapListener.onCropError("剪切bitmap失败!");
                 } else {
                     //压缩图片
+
                     //保存图片
                     try {
                         File savePath = FileUtils.getSavePath(Bitmap.CompressFormat.PNG == format ? "png" : "jpg");
@@ -46,12 +69,12 @@ public class CropBitmapAsync {
             @Override
             protected void onPostExecute(String savePath) {
                 super.onPostExecute(savePath);
-                if (onCropBitmapListener!=null)onCropBitmapListener.onCropSuccess(savePath);
+                if (onCropBitmapListener != null) onCropBitmapListener.onCropSuccess(savePath);
             }
         }.execute();
     }
 
-    public static Bitmap cropBitmap(Drawable drawable, RectF lineRect, RectF bitmapRect) {
+    public Bitmap cropBitmap(Drawable drawable, RectF lineRect, RectF bitmapRect) {
         if (drawable instanceof BitmapDrawable) {
             //获取bitmap
             BitmapDrawable bitmapDrawer = (BitmapDrawable) drawable;
@@ -69,10 +92,10 @@ public class CropBitmapAsync {
             int cropTop = (int) ((lineRect.top - bitmapRect.top) / tempBitmapHeight * bitmapHeight);
             int cropWidth = (int) (lineRect.width() / tempBitmapWidth * bitmapWidth);
             int cropHeight = (int) (lineRect.height() / tempBitmapHeight * bitmapHeight);
-            if (cropLeft<0)cropLeft=0;
-            if (cropTop<0)cropTop=0;
-            if (cropWidth+cropLeft>bitmapWidth)cropWidth=bitmapWidth-cropLeft;
-            if (cropHeight+cropTop>bitmapHeight)cropHeight=bitmapHeight-cropTop;
+            if (cropLeft < 0) cropLeft = 0;
+            if (cropTop < 0) cropTop = 0;
+            if (cropWidth + cropLeft > bitmapWidth) cropWidth = bitmapWidth - cropLeft;
+            if (cropHeight + cropTop > bitmapHeight) cropHeight = bitmapHeight - cropTop;
             return Bitmap.createBitmap(bitmap, cropLeft, cropTop, cropWidth, cropHeight);
         }
         return null;

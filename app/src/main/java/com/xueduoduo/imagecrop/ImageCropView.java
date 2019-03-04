@@ -54,9 +54,9 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
             float centerX = (right - left) / 2;
             float centerY = (bottom - top) / 2;
 
-            if (compressBean!=null){
+            if (compressBean != null) {
 
-            }else {
+            } else {
 
             }
 
@@ -80,7 +80,7 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
         //移动线框 注意 : 不可让边框大于图片的边距
         if (!isImgMove) {
             //刷新图片边距
-            if (event.getAction()==MotionEvent.ACTION_DOWN){
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 mLineDrawer.freshBitmapRect(mBitmapDrawer.getBitmapRect());
             }
             isLineMove = mLineDrawer.isCanMove(event);
@@ -88,7 +88,7 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
         //移动图片
         if (!isLineMove) {
             //刷新剪切框边界
-            if (event.getAction()==MotionEvent.ACTION_DOWN){
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 mBitmapDrawer.freshLineRect(mLineDrawer.getLineRect());
             }
             mBitmapDrawer.freshLineRect(mLineDrawer.getLineRect());
@@ -97,8 +97,10 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
         return isLineMove || isImgMove;
     }
 
-    public void startCrop(OnCropBitmapListener onCropBitmapListener){
-          CropBitmapAsync.getCropBitmap(Bitmap.CompressFormat.JPEG,getDrawable(),mLineDrawer.getLineRect(),mBitmapDrawer.getBitmapRect(),onCropBitmapListener);
+    public void startCrop(OnCropBitmapListener onCropBitmapListener) {
+        new CropBitmapAsync()
+                .initData(Bitmap.CompressFormat.JPEG, getDrawable(), mLineDrawer.getLineRect(), mBitmapDrawer.getBitmapRect(), onCropBitmapListener)
+                .start();
     }
 
     /**
@@ -117,7 +119,7 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
     }
 
     public void setCompressBean(CompressBean compressBean) {
-        this.compressBean=compressBean;
+        this.compressBean = compressBean;
         mLineDrawer.setRatio(compressBean.getRatio());
     }
 }
