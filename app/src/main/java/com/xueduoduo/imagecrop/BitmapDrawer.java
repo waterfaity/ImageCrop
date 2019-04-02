@@ -36,6 +36,7 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
     private float currentSmallScale;
     private float currentScale;//当前缩放
     private RectF lineRect;//剪切线rect
+    private RectF oriRect;
 
 
     public BitmapDrawer(ImageView imageView) {
@@ -68,6 +69,7 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
      */
     private void initSmaller(float scale) {
         SMALLER = scale;
+        oriRect = getMatrixRectF();
     }
 
     private void startAnim(final float fromScale, final float targetScale, final float x, final float y) {
@@ -333,7 +335,15 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
     }
 
     private void calcMinScale() {
-        currentSmallScale = 1;
+        initSmaller(getScale());
+        float centerX = oriRect.centerX();
+        float centerY = oriRect.centerY();
+        if (lineRect != null && SMALLER != 0) {
+            float scaleTop = 0;
+            if (lineRect.top > centerX) {
+                scaleTop = SMALLER / (oriRect.top - centerX) * (lineRect.top - centerX);
+            }
+        }
     }
 
     public interface OnDrawerChangeListener {
