@@ -91,7 +91,7 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 mBitmapDrawer.freshLineRect(mLineDrawer.getLineRect());
             }
-            mBitmapDrawer.freshLineRect(mLineDrawer.getLineRect());
+//            mBitmapDrawer.freshLineRect(mLineDrawer.getLineRect());
             isImgMove = mBitmapDrawer.isCanMove(event);
         }
         return isLineMove || isImgMove;

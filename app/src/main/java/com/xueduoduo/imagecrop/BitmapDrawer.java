@@ -1,5 +1,8 @@
 package com.xueduoduo.imagecrop;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
@@ -8,6 +11,8 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.widget.ImageView;
+
+import java.util.logging.Handler;
 
 /**
  * @author water_fairy
@@ -26,8 +31,9 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
     private int mLastPointCount;
     private float[] matrixValues = new float[9];
 
-    private float BIGGER = 4;//最大缩放倍数
+    private float BIGGER = 3;//最大缩放倍数
     private float SMALLER;//默认是加载图片时的缩放大小
+    private float currentSmallScale;
     private float currentScale;//当前缩放
     private RectF lineRect;//剪切线rect
 
@@ -37,11 +43,61 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
         gestureDetector = new GestureDetector(imageView.getContext(), new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-                Log.i(TAG, "onDoubleTap: ");
+                float scale = getScale();
+                if (SMALLER == 0) initSmaller(scale);
+                if (scale < BIGGER / 4F - 0.1F) {
+                    //->2
+                    startAnim(scale, BIGGER / 4F, e.getX(), e.getY());
+                } else if (scale < BIGGER - 0.1F) {
+                    //->4
+                    startAnim(scale, BIGGER, e.getX(), e.getY());
+                } else {
+                    //->1
+                    startAnim(scale, Math.max(SMALLER, currentSmallScale), e.getX(), e.getY());
+                }
                 return true;
             }
         });
         scaleGestureDetector = new ScaleGestureDetector(imageView.getContext(), this);
+    }
+
+    /**
+     * 初始化最小区域额
+     *
+     * @param scale
+     */
+    private void initSmaller(float scale) {
+        SMALLER = scale;
+    }
+
+    private void startAnim(final float fromScale, final float targetScale, final float x, final float y) {
+        Log.i(TAG, "startAnim: " + isZoom + "   " + isDrag + "    " + fromScale + " " + targetScale);
+        if (isZoom || isDrag) return;
+        ValueAnimator valueAnimator = new ValueAnimator();
+        valueAnimator.setFloatValues(1F);
+        valueAnimator.setDuration(300);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float value = (float) animation.getAnimatedValue();
+                Matrix matrix = imageView.getImageMatrix();
+                float targetScaleTemp = (targetScale - fromScale) * value + fromScale;
+                Log.i(TAG, "onAnimationUpdate: " + targetScaleTemp);
+                targetScaleTemp = targetScaleTemp / getScale();
+                matrix.postScale(targetScaleTemp, targetScaleTemp, x, y);
+                checkBorderAndCenterWhenScale();
+                onDrawerChangeListener.onBitmapChange(BitmapDrawer.this);
+            }
+        });
+        valueAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                isZoom = false;
+            }
+        });
+        valueAnimator.start();
+        isZoom = true;
     }
 
     private OnDrawerChangeListener onDrawerChangeListener;
@@ -145,6 +201,10 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
     }
 
 
+    private float getSmallScale() {
+        return Math.max(SMALLER, currentSmallScale);
+    }
+
     /**
      * 根据手势缩放中
      *
@@ -156,12 +216,12 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
 
         Matrix matrix = imageView.getImageMatrix();
         currentScale = getScale();
-        if (SMALLER == 0) SMALLER = currentScale;
+        if (SMALLER == 0) initSmaller(currentScale);
         float scaleFactor = detector.getScaleFactor();
         //缩小  放大
-        if ((currentScale > SMALLER && scaleFactor < 1.0F) || (currentScale < BIGGER && scaleFactor > 1.0F)) {
-            if (currentScale * scaleFactor < SMALLER) {
-                scaleFactor = SMALLER / currentScale;
+        if ((currentScale > getSmallScale() && scaleFactor < 1.0F) || (currentScale < BIGGER && scaleFactor > 1.0F)) {
+            if (currentScale * scaleFactor < getSmallScale()) {
+                scaleFactor = getSmallScale() / currentScale;
             }
             if (currentScale * scaleFactor > BIGGER) {
                 scaleFactor = BIGGER / currentScale;
@@ -217,7 +277,7 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
         if (rect.height() < height) {
             deltaY = height * 0.5f - rect.bottom + 0.5f * rect.height();
         }
-        Log.e(TAG, "deltaX = " + deltaX + " , deltaY = " + deltaY);
+//        Log.e(TAG, "deltaX = " + deltaX + " , deltaY = " + deltaY);
 
         imageView.getImageMatrix().postTranslate(deltaX, deltaY);
 
@@ -267,6 +327,13 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
 
     public void freshLineRect(RectF lineRect) {
         this.lineRect = lineRect;
+        //计算最小缩放大小
+        calcMinScale();
+
+    }
+
+    private void calcMinScale() {
+        currentSmallScale = 1;
     }
 
     public interface OnDrawerChangeListener {
@@ -281,23 +348,5 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
     private float getScale() {
         imageView.getImageMatrix().getValues(matrixValues);
         return matrixValues[Matrix.MSCALE_X];
-    }
-
-    private class AutoScaleRunnable implements Runnable {
-
-        private final float targetScale;
-        private final float y;
-        private final float x;
-
-        public AutoScaleRunnable(float targetScale, float x, float y) {
-            this.targetScale = targetScale;
-            this.x = x;
-            this.y = y;
-        }
-
-        @Override
-        public void run() {
-
-        }
     }
 }
