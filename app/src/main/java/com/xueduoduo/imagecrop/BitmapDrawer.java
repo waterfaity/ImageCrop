@@ -45,7 +45,7 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
             @Override
             public boolean onDoubleTap(MotionEvent e) {
                 float scale = getScale();
-                if (SMALLER == 0) initSmaller(scale);
+                initSmaller(scale);
                 if (scale < BIGGER / 4F - 0.1F) {
                     //->2
                     startAnim(scale, BIGGER / 4F, e.getX(), e.getY());
@@ -68,8 +68,10 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
      * @param scale
      */
     private void initSmaller(float scale) {
-        SMALLER = scale;
-        oriRect = getMatrixRectF();
+        if (SMALLER == 0) {
+            SMALLER = scale;
+            oriRect = getMatrixRectF();
+        }
     }
 
     private void startAnim(final float fromScale, final float targetScale, final float x, final float y) {
@@ -218,7 +220,7 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
 
         Matrix matrix = imageView.getImageMatrix();
         currentScale = getScale();
-        if (SMALLER == 0) initSmaller(currentScale);
+        initSmaller(currentScale);
         float scaleFactor = detector.getScaleFactor();
         //缩小  放大
         if ((currentScale > getSmallScale() && scaleFactor < 1.0F) || (currentScale < BIGGER && scaleFactor > 1.0F)) {
@@ -331,18 +333,33 @@ public class BitmapDrawer implements ScaleGestureDetector.OnScaleGestureListener
         this.lineRect = lineRect;
         //计算最小缩放大小
         calcMinScale();
-
     }
 
     private void calcMinScale() {
-        initSmaller(getScale());
-        float centerX = oriRect.centerX();
-        float centerY = oriRect.centerY();
-        if (lineRect != null && SMALLER != 0) {
-            float scaleTop = 0;
-            if (lineRect.top > centerX) {
-                scaleTop = SMALLER / (oriRect.top - centerX) * (lineRect.top - centerX);
+        if (lineRect != null && SMALLER != 0 && oriRect != null) {
+            float centerX = oriRect.centerX();
+            float centerY = oriRect.centerY();
+            //left
+            float scaleLeft = 0;
+            if (lineRect.left < centerX) {
+                scaleLeft = SMALLER / (centerX - oriRect.left) * (centerX - lineRect.left);
             }
+            //top
+            float scaleTop = 0;
+            if (lineRect.top < centerY) {
+                scaleTop = SMALLER / (centerY - oriRect.top) * (centerY - lineRect.top);
+            }
+            //right
+            float scaleRight = 0;
+            if (lineRect.right > centerX) {
+                scaleRight = SMALLER / (oriRect.right - centerX) * (lineRect.right - centerX);
+            }
+            //bottom
+            float scaleBottom = 0;
+            if (lineRect.bottom > centerY) {
+                scaleBottom = SMALLER / (oriRect.bottom - centerY) * (lineRect.bottom - centerY);
+            }
+            currentSmallScale = Math.max(Math.max(scaleTop, scaleBottom), Math.max(scaleLeft, scaleRight));
         }
     }
 

@@ -35,8 +35,6 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
         mLineDrawer.setOnLineChangeListener(this);
         mBitmapDrawer = new BitmapDrawer(this);
         mBitmapDrawer.setOnDrawerChangeListener(this);
-        mLineDrawer.freshBitmapRect(mBitmapDrawer.getBitmapRect());
-        mBitmapDrawer.freshLineRect(mLineDrawer.getLineRect());
     }
 
     private void test() {
@@ -68,7 +66,6 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-//        mBitmapDrawer.draw(canvas);
         mLineDrawer.draw(canvas);
         canvas.drawText(mLineDrawer.toString(), 10, 25, mPaint);
     }
@@ -91,7 +88,6 @@ public class ImageCropView extends AppCompatImageView implements LineDrawer.OnLi
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 mBitmapDrawer.freshLineRect(mLineDrawer.getLineRect());
             }
-//            mBitmapDrawer.freshLineRect(mLineDrawer.getLineRect());
             isImgMove = mBitmapDrawer.isCanMove(event);
         }
         return isLineMove || isImgMove;
